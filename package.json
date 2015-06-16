@@ -1,0 +1,36 @@
+{
+  "name": "hansa",
+  "version": "0.0.0",
+  "description": "Create leagues of Argosy micro-service endpoints",
+  "main": "index.js",
+  "scripts": {
+    "test": "make npm-test",
+    "coverage": "make npm-coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jasonpincin/hansa.git"
+  },
+  "keywords": [
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jasonpincin/hansa/issues"
+  },
+  "homepage": "https://github.com/jasonpincin/hansa",
+  "author": {
+    "name": "Jason Pincin",
+    "email": "jason@pincin.com",
+    "url": "http://jason.pincin.com/"
+  },
+  "contributors": [
+  ],
+  "devDependencies": {
+    "istanbul": "~0.3.14",
+    "jshint": "~2.8.0",
+    "opn": "~1.0.1",
+    "tap-dot": "~1.0.0",
+    "tap-spec": "~4.0.0",
+    "tape": "~4.0.0"
+  }
+}
