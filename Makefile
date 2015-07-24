@@ -18,15 +18,15 @@ npm-test: lint test coverage-check
 travis-test: lint test coverage-check
 	@(cat coverage/lcov.info | coveralls) || exit 0
 
-npm-coverage: coverage-report
+npm-coverage: coverage-report coverage-html-report
 ifdef npm_config_html
 	@make browse-coverage
 endif
 
-lint:node_modules
-	@$(BIN)/jshint --exclude '**/{coverage,node_modules}/*' **/*.js
+lint:
+	@$(BIN)/eslint .
 
-test: node_modules
+test:
 	$(if $(npm_config_grep), @echo "Running test files that match pattern: $(npm_config_grep)\n",)
 ifdef npm_config_dot
 	@make test-dot
@@ -38,13 +38,13 @@ else
 endif
 endif
 
-test-tap: node_modules
+test-tap:
 	@find ./test -maxdepth 1 -name "*.js" -type f | grep ""$(npm_config_grep) | xargs $(BIN)/istanbul cover --report lcovonly --print none $(BIN)/tape --
 
-test-dot: node_modules
+test-dot:
 	@make test-tap | $(BIN)/tap-dot
 
-test-spec: node_modules
+test-spec:
 	@make test-tap | $(BIN)/tap-spec
 
 coverage:
@@ -56,7 +56,7 @@ coverage-check: coverage
 	$(if $(npm_config_grep),,@if [ -s coverage/error ]; then echo; grep ERROR coverage/error; echo; exit 1; fi)
 
 coverage-report: coverage
-	@$(BIN)/istanbul report text | grep -v "Using reporter" | grep -v "Done"
+	@$(BIN)/istanbul report text #| grep -v "Using reporter" | grep -v "Done"
 
 coverage-html-report: coverage
 	@$(BIN)/istanbul report html > /dev/null
@@ -64,11 +64,5 @@ coverage-html-report: coverage
 browse-coverage: coverage-html-report
 	@$(BIN)/opn coverage/index.html
 
-node_modules: package.json
-	@echo '# *** running "npm install" for you ***'
-	@npm install
-	@mkdir -p node_modules
-	@touch node_modules
-
 clean:
-	@rm -rf node_modules coverage
+	@rm -rf coverage
