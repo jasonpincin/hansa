@@ -3,7 +3,7 @@ var test   = require('tape'),
     hansa  = require('..')
 
 test('league', function (t) {
-    t.plan(4)
+    t.plan(5)
 
     var service1 = argosy(),
         service2 = argosy(),
@@ -18,16 +18,24 @@ test('league', function (t) {
     service1.accept({ greet: argosy.pattern.match.string })
     service2.accept({ random: argosy.pattern.match.number })
 
-    var syncedCount = 0
-    league.synced(function (synced) {
-        if (synced.id === client.id) return
-        syncedCount++
-        t.equal(synced.services, 1, 'sync should tell us 1 service was synced')
-        if (syncedCount < 2) return
+    league.sync(function (state) {
+        if (state.syncPending) return
+
         t.deepEqual(league.services, [
             { provider: { id: service1.id }, pattern: { greet: argosy.pattern.match.string }, remote: true },
             { provider: { id: service2.id }, pattern: { random: argosy.pattern.match.number }, remote: true }
         ], 'after sync, league.services should contain both argosy endpoint services')
         t.equal(league.ports.length, 3, 'ports should contain all active ports')
+    })
+
+    league.endpointAdded(function (provider) {
+        switch (provider.id) {
+            case client.id:
+                t.equals(provider.services, 0, 'client exposes no services')
+                break
+            default:
+                t.equals(provider.services, 1, 'server expose 1 service')
+                break
+        }
     })
 })
