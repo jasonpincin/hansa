@@ -18,7 +18,7 @@ test('league', function (t) {
     service1.accept({ greet: argosy.pattern.match.string })
     service2.accept({ random: argosy.pattern.match.number })
 
-    league.sync(function (state) {
+    league.syncStateChange(function (state) {
         if (state.syncPending) return
 
         t.deepEqual(league.services, [

@@ -11,8 +11,7 @@
     "type": "git",
     "url": "git://github.com/jasonpincin/hansa.git"
   },
-  "keywords": [
-  ],
+  "keywords": [],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/jasonpincin/hansa/issues"
@@ -23,14 +22,26 @@
     "email": "jason@pincin.com",
     "url": "http://jason.pincin.com/"
   },
-  "contributors": [
-  ],
+  "contributors": [],
   "devDependencies": {
-    "istanbul": "~0.3.14",
-    "jshint": "~2.8.0",
-    "opn": "~1.0.1",
+    "argosy": "~2.0.0",
+    "eslint": "~0.24.1",
+    "istanbul": "~0.3.17",
+    "opn": "~3.0.2",
     "tap-dot": "~1.0.0",
-    "tap-spec": "~4.0.0",
-    "tape": "~4.0.0"
+    "tap-spec": "~4.0.2",
+    "tape": "~4.0.1"
+  },
+  "dependencies": {
+    "argosy": "~2.0.0",
+    "argosy-pattern": "~1.0.2",
+    "eventuate": "~3.1.0",
+    "object-assign": "~3.0.0",
+    "promise-polyfill": "~2.1.0",
+    "split2": "~1.0.0",
+    "stream-combiner2": "~1.0.2",
+    "through2": "~2.0.0",
+    "through2-objectify": "~0.1.1",
+    "uuid": "~2.0.1"
   }
 }
