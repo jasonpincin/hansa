@@ -3,9 +3,8 @@
 [![NPM version](https://badge.fury.io/js/hansa.png)](http://badge.fury.io/js/hansa)
 [![Build Status](https://travis-ci.org/jasonpincin/hansa.svg?branch=master)](https://travis-ci.org/jasonpincin/hansa)
 [![Coverage Status](https://coveralls.io/repos/jasonpincin/hansa/badge.png?branch=master)](https://coveralls.io/r/jasonpincin/hansa?branch=master)
-[![Davis Dependency Status](https://david-dm.org/jasonpincin/hansa.png)](https://david-dm.org/jasonpincin/hansa)
 
-Create leagues of Argosy micro-service endpoints
+Create leagues of [Argosy](https://github.com/jasonpincin/argosy) micro-service endpoints.
 
 ## example
 
