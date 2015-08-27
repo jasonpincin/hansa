@@ -1,12 +1,5 @@
 var argosy    = require('argosy'),
-    // assign    = require('object-assign'),
-    // through2  = require('through2'),
-    // objectify = require('through2-objectify'),
-    // pipeline  = require('stream-combiner2'),
-    // split     = require('split2'),
     uuid      = require('uuid').v4,
-    // Promise   = require('promise-polyfill'),
-    // pattern   = require('argosy-pattern'),
     eventuate = require('eventuate')
 
 module.exports = function hansa () {
@@ -69,7 +62,6 @@ module.exports = function hansa () {
         }
         return port
     }
-
 
     return league
 }
