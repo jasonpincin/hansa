@@ -28,13 +28,13 @@ test('league', function (t) {
         t.equal(league.ports.length, 3, 'ports should contain all active ports')
     })
 
-    league.endpointAdded(function (provider) {
-        switch (provider.id) {
+    league.endpointAdded(function (endpoint) {
+        switch (endpoint.id) {
             case client.id:
-                t.equals(provider.services, 0, 'client exposes no services')
+                t.equals(endpoint.services, 0, 'client exposes no services')
                 break
             default:
-                t.equals(provider.services, 1, 'server expose 1 service')
+                t.equals(endpoint.services, 1, 'server expose 1 service')
                 break
         }
     })
