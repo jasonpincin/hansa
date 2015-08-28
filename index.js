@@ -11,7 +11,7 @@ module.exports = function hansa () {
     var league = {}
     Object.defineProperties(league, {
         id: { value: uuid(), enumerable: true },
-        port: { get: function () {
+        port: { value: function () {
             var stream = createPort()
             return stream
         }},

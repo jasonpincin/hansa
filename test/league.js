@@ -11,9 +11,9 @@ test('league', function (t) {
         league   = hansa()
 
     // .port is a getter that returns a unique stream, allowing league to route vs broadcast
-    service1.pipe(league.port).pipe(service1)
-    service2.pipe(league.port).pipe(service2)
-    client.pipe(league.port).pipe(client)
+    service1.pipe(league.port()).pipe(service1)
+    service2.pipe(league.port()).pipe(service2)
+    client.pipe(league.port()).pipe(client)
 
     service1.accept({ greet: argosy.pattern.match.string })
     service2.accept({ random: argosy.pattern.match.number })
