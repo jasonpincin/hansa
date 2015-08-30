@@ -1,32 +1,25 @@
-var argosy       = require('argosy'),
-    uuid         = require('uuid').v4,
-    eventuate    = require('eventuate'),
-    mkRegistry   = require('./lib/registry'),
-    setImmediate = require('timers').setImmediate
+var argosy         = require('argosy'),
+    uuid           = require('uuid').v4,
+    eventuate      = require('eventuate'),
+    createRegistry = require('./lib/registry'),
+    setImmediate   = require('timers').setImmediate
 
-module.exports = function hansa () {
-    var ports        = [],
-        syncPending  = 0,
-        syncComplete = 0,
-        registry     = mkRegistry()
-
-    var league = {}
+module.exports = function createLeague () {
+    var league = {
+        port           : createPort,
+        ports          : [],
+        error          : eventuate({ requireConsumption: true }),
+        syncStateChange: eventuate(),
+        endpointAdded  : eventuate()
+    }
     Object.defineProperties(league, {
-        id: { value: uuid(), enumerable: true },
-        port: { value: function () {
-            var stream = createPort()
-            return stream
-        }},
-        services: { enumerable: true, get: function () {
-            return registry.services
-        }},
-        ports: { enumerable: true, get: function () {
-            return ports
-        }},
-        error: { value: eventuate({ requireConsumption: true }) },
-        syncStateChange: { value: eventuate() },
-        endpointAdded: { value: eventuate() }
+        id      : { enumerable: true, value: uuid() },
+        services: { enumerable: true, get: function () { return registry.services }}
     })
+
+    var registry     = createRegistry(),
+        syncPending  = 0,
+        syncComplete = 0
 
     function route (msg, cb) {
         var provider = registry.getProvider(msg)
@@ -34,10 +27,14 @@ module.exports = function hansa () {
         provider.invoke(msg, cb)
     }
 
+    // hansa league terminology - a port is just a local argosy endpoint
+    // each "port" will share it's id with the league so that all the remote
+    // argosy endpoints (one connected to each port), see's the same id
+    // and services
     function createPort () {
-        var port         = argosy({ id: league.id }),
-            portServices = []
-        ports.push(port)
+        var port = argosy({ id: league.id })
+        port.services = []
+        league.ports.push(port)
 
         function routePattern (pattern) {
             port.accept(pattern).process(route)
@@ -61,13 +58,13 @@ module.exports = function hansa () {
         function clean () {
             port.removeAllListeners()
             port.serviceAdded.remove(onServcieAdded)
-            portServices.forEach(function (svc) {
+            port.services.forEach(function (svc) {
                 registry.remove(svc, port)
             })
-            ports.splice(ports.indexOf(port), 1)
+            league.ports.splice(league.ports.indexOf(port), 1)
         }
         function onServcieAdded (svc) {
-            portServices.push(svc)
+            port.services.push(svc)
             registry.add(svc, port)
         }
         return port
