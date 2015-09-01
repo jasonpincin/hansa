@@ -23,8 +23,9 @@ module.exports = function createLeague () {
 
     function route (msg, cb) {
         var provider = registry.getProvider(msg)
+
         if (!provider) return setImmediate(cb, new Error('not implemented: ' + JSON.stringify(msg)))
-        provider.invoke(msg, cb)
+        provider.invoke.remote(msg, cb)
     }
 
     // hansa league terminology - a port is just a local argosy endpoint
@@ -53,7 +54,7 @@ module.exports = function createLeague () {
             })
         })
         port.on('unpipe', clean)
-        port.serviceAdded(onServcieAdded)
+        port.remoteServiceAdded(onServcieAdded)
 
         function clean () {
             port.removeAllListeners()
