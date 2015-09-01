@@ -27,7 +27,7 @@
     "@jasonpincin/standard": "~5.0.0-8",
     "deep-equal": "~1.0.0",
     "istanbul": "~0.3.18",
-    "opn": "~3.0.2",
+    "opn": "~1.0.2",
     "tap-dot": "~1.0.0",
     "tap-spec": "~4.1.0",
     "tape": "~4.2.0"
