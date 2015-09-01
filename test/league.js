@@ -5,7 +5,7 @@ var test   = require('tape'),
     hansa  = require('..')
 
 test('league', function (t) {
-    t.plan(11)
+    t.plan(12)
 
     var service1 = argosy(),
         service2 = argosy(),
@@ -43,9 +43,14 @@ test('league', function (t) {
             t.false(err, 'greet does not result in error')
             t.equal(msg, 'Greetings Gege', 'greet replies with expected message')
         })
+
         client.invoke({ max: [5, 1, 9, 7] }, function (err, max) {
             t.false(err, 'max does not result in error')
             t.equal(max, 9, 'max replies with highest number')
+        })
+
+        client.invoke({ help: 'me' }, function (err, help) {
+            t.true(err, 'invoking unimplemented services results in error')
         })
     })
 
@@ -59,4 +64,26 @@ test('league', function (t) {
                 break
         }
     })
+})
+
+test('unpipe', function (t) {
+    t.plan(2)
+
+    var service1 = argosy(),
+        league   = hansa(),
+        port     = league.port()
+
+    service1.pipe(port).pipe(service1)
+
+    service1.accept({ help: argosy.pattern.match.defined })
+    league.syncStateChange(function (state) {
+        if (state.syncPending) return
+
+        t.equal(league.services.length, 1, 'league exposes 1 service before unpipe')
+        service1.unpipe(port)
+        league.endpointRemoved(function () {
+            t.equal(league.services.length, 0, 'league exposes 0 services before unpipe')
+        })
+    })
+
 })
