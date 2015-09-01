@@ -10,7 +10,8 @@ module.exports = function createLeague () {
         ports          : [],
         error          : eventuate({ requireConsumption: true }),
         syncStateChange: eventuate(),
-        endpointAdded  : eventuate()
+        endpointAdded  : eventuate(),
+        endpointRemoved: eventuate()
     }
     Object.defineProperties(league, {
         id      : { enumerable: true, value: uuid() },
@@ -22,10 +23,7 @@ module.exports = function createLeague () {
         syncComplete = 0
 
     function route (msg, cb) {
-        var provider = registry.getProvider(msg)
-
-        if (!provider) return setImmediate(cb, new Error('not implemented: ' + JSON.stringify(msg)))
-        provider.invoke.remote(msg, cb)
+        registry.getProvider(msg).invoke.remote(msg, cb)
     }
 
     // hansa league terminology - a port is just a local argosy endpoint
@@ -34,7 +32,6 @@ module.exports = function createLeague () {
     // and services
     function createPort () {
         var port = argosy({ id: league.id })
-        port.services = []
         league.ports.push(port)
 
         function routePattern (pattern) {
@@ -54,18 +51,21 @@ module.exports = function createLeague () {
             })
         })
         port.on('unpipe', clean)
-        port.remoteServiceAdded(onServcieAdded)
+        port.remoteServiceAdded(onRemoteService)
 
         function clean () {
+            port.unpipe()
             port.removeAllListeners()
-            port.serviceAdded.remove(onServcieAdded)
-            port.services.forEach(function (svc) {
+            port.serviceAdded.removeAllConsumers()
+            port.services.filter(function (svc) {
+                return svc.remote
+            }).forEach(function (svc) {
                 registry.remove(svc, port)
             })
             league.ports.splice(league.ports.indexOf(port), 1)
+            setImmediate(league.endpointRemoved.produce, port)
         }
-        function onServcieAdded (svc) {
-            port.services.push(svc)
+        function onRemoteService (svc) {
             registry.add(svc, port)
         }
         return port
