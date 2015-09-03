@@ -1,26 +1,44 @@
 var argosy         = require('argosy'),
     uuid           = require('uuid').v4,
     eventuate      = require('eventuate'),
+    once           = require('eventuate-once'),
+    after          = require('afterward'),
+    Promise        = require('promise-polyfill'),
     createRegistry = require('./lib/registry'),
     setImmediate   = require('timers').setImmediate
 
 module.exports = function createLeague () {
+    var registry     = createRegistry(),
+        syncPending  = 0,
+        syncComplete = 0
+
     var league = {
         port           : createPort,
         ports          : [],
         error          : eventuate({ requireConsumption: true }),
         syncStateChange: eventuate(),
         endpointAdded  : eventuate(),
-        endpointRemoved: eventuate()
+        endpointRemoved: eventuate(),
+        ready          : ready
     }
     Object.defineProperties(league, {
         id      : { enumerable: true, value: uuid() },
         services: { enumerable: true, get: function () { return registry.services }}
     })
 
-    var registry     = createRegistry(),
-        syncPending  = 0,
-        syncComplete = 0
+    return league
+
+    function ready (cb) {
+        var synced = !syncPending
+            ? Promise.resolve({ syncPending: syncPending, syncComplete: syncComplete })
+            : once.match(league.syncStateChange, noSyncPending)
+
+        return after(synced, cb)
+
+        function noSyncPending (state) {
+            return !state.syncPending
+        }
+    }
 
     function route (msg, cb) {
         registry.getProvider(msg).invoke.remote(msg, cb)
@@ -70,6 +88,4 @@ module.exports = function createLeague () {
         }
         return port
     }
-
-    return league
 }
