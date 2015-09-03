@@ -9,7 +9,35 @@ Create leagues of [Argosy](https://github.com/jasonpincin/argosy) micro-service 
 ## example
 
 ```javascript
-TODO
+var argosy = require('argosy'),
+    hansa  = require('hansa')
+
+var service1 = argosy(),
+    service2 = argosy(),
+    client   = argosy(),
+    league   = hansa()
+
+service1.pipe(league.port()).pipe(service1)
+service2.pipe(league.port()).pipe(service2)
+client.pipe(league.port()).pipe(client)
+
+service1.accept({ greet: argosy.pattern.match.string }).process(function (msg, cb) {
+    cb(null, 'Greetings ' + msg.greet)
+})
+
+service2.accept({ max: argosy.pattern.match.array }).process(function (msg, cb) {
+    cb(null, Math.max.apply(null, msg.max))
+})
+
+league.ready(function () {
+    client.invoke({ greet: 'Gege' }, function (err, message) {
+        console.log(message)
+
+        client.invoke({ max: [3, 9, 7] }, function (err, max) {
+            console.log('The biggest number is: ' + max)
+        })
+    })
+})
 ```
 
 ## api
