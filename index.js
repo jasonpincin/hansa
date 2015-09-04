@@ -12,42 +12,23 @@ module.exports = function createLeague () {
         syncPending  = 0,
         syncComplete = 0
 
-    var league = {
-        port           : createPort,
-        ports          : [],
-        error          : eventuate({ requireConsumption: true }),
-        syncStateChange: eventuate(),
-        endpointAdded  : eventuate(),
-        endpointRemoved: eventuate(),
-        ready          : ready
-    }
-    Object.defineProperties(league, {
-        id      : { enumerable: true, value: uuid() },
-        services: { enumerable: true, get: function () { return registry.services }}
+    var league = Object.defineProperties({}, {
+        id             : { value: uuid(), enumerable: true },
+        ports          : { value: [], enumerable: true },
+        services       : { get: getServices, enumerable: true },
+        port           : { value: createPort, configurable: true },
+        ready          : { value: ready, configurable: true },
+        error          : { value: eventuate({ requireConsumption: true }), configurable: true },
+        syncStateChange: { value: eventuate(), configurable: true },
+        endpointAdded  : { value: eventuate(), configurable: true },
+        endpointRemoved: { value: eventuate(), configurable: true }
     })
 
     return league
 
-    function ready (cb) {
-        var synced = !syncPending
-            ? Promise.resolve({ syncPending: syncPending, syncComplete: syncComplete })
-            : once.match(league.syncStateChange, noSyncPending)
-
-        return after(synced, cb)
-
-        function noSyncPending (state) {
-            return !state.syncPending
-        }
-    }
-
-    function route (msg, cb) {
-        registry.getProvider(msg).invoke.remote(msg, cb)
-    }
-
     // hansa league terminology - a port is just a local argosy endpoint
     // each "port" will share it's id with the league so that all the remote
-    // argosy endpoints (one connected to each port), see's the same id
-    // and services
+    // argosy endpoints (one connected to each port), see's the same id and services
     function createPort () {
         var port = argosy({ id: league.id })
         league.ports.push(port)
@@ -88,4 +69,25 @@ module.exports = function createLeague () {
         }
         return port
     }
+
+    function ready (cb) {
+        var synced = !syncPending
+            ? Promise.resolve({ syncPending: syncPending, syncComplete: syncComplete })
+            : once.match(league.syncStateChange, noSyncPending)
+
+        return after(synced, cb)
+
+        function noSyncPending (state) {
+            return !state.syncPending
+        }
+    }
+
+    function route (msg, cb) {
+        registry.getProvider(msg).invoke.remote(msg, cb)
+    }
+
+    function getServices () {
+        return registry.services
+    }
+
 }
