@@ -56,13 +56,17 @@ module.exports = function createLeague () {
             port.unpipe()
             port.removeAllListeners()
             port.serviceAdded.removeAllConsumers()
-            port.services.filter(function (svc) {
+            var remoteServices = port.services.filter(function (svc) {
                 return svc.remote
-            }).forEach(function (svc) {
+            })
+            remoteServices.forEach(function (svc) {
                 registry.remove(svc, port)
             })
             league.ports.splice(league.ports.indexOf(port), 1)
-            setImmediate(league.endpointRemoved.produce, port)
+            setImmediate(league.endpointRemoved.produce, {
+                id      : port.remoteId,
+                services: remoteServices.length
+            })
         }
         function onRemoteService (svc) {
             registry.add(svc, port)
