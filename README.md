@@ -54,9 +54,46 @@ Add an unpaired Argosy endpoint (aka port) to the league, to be connected to ano
 
 Connect an Argosy endpoint to the league via the created port. Only one argosy endpoint should be connected to a given port. Upon connecting, the league will request to be notified of services offered by (now or in the future) the `argosyEndpoint`, and any Argosy endpoint connected to the league will see those services, as well as the services of all other connected endpoints.
 
+### league.endpointAdded(cb)
+
+An [eventuate](https://github.com/jasonpincin/eventuate) representing the addition of a new endpoint. This eventuate produces an event after the new endpoint has fully informed the `league` of it's services. Handler functions associated with this eventuate receive an event payload in the format of:
+
+```javascript
+{
+    id: String,
+    services: Number
+}
+```
+
+Where `id` contains the UUID of the newly added remote Argosy endpoint, and `services` contains the count of services added.
+
+### league.endpointRemoved(cb)
+
+An eventuate representing the removal of an endpoint. This eventuate produces an event upon the complete cleanup of a disconnected Argosy endpoint. Handler functions associated with this eventuate will receive an event payload in the format of:
+
+```javascript
+{
+    id: String,
+    services: Number
+}
+```
+
+Where `id` contains the UUID of the newly added remote Argosy endpoint, and `services` contains the count of services added.
+
+### league.syncStateChange(cb)
+
+An eventuate representing a change in the `league`'s "sync" status. This occurs when a new endpoint is connected. For each new Argosy endpoint connected, there is one "pending" sync operation. Once the endpoint sends information for all it's services, followed by a "sync" statement (signifying the `league` has been fully informed), pending is decremented by one, and "complete" sync operations is incremented. Handler functions associated with this eventuate receive a payload in the format of: 
+
+```javascript
+{
+    syncPending: Number,
+    syncComplete: Number
+}
+```
+
 ### league.ready(cb)
 
-Invoke the `cb` function when all outstanding argosy endpoint connections have fully informed the league of their available services. This function also returns a `Promise`.
+Invoke the `cb` function when all connected argosy endpoint connections have fully informed the league of their available services. If the `league` is already fully informed by all connected endpoints, `cb` is invoked immediately. This function also returns a `Promise`.
 
 TO BE COMPLETED
 
