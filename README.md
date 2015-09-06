@@ -91,11 +91,25 @@ An eventuate representing a change in the `league`'s "sync" status. This occurs 
 }
 ```
 
+### league.error(cb)
+
+An eventuate representing an error condition within the league. Handler functions associated with this eventuate receive the `Error` object as the payload. This eventuate requires consumption, i.e. if no handler is associated with this eventuate when an `Error` is produced, the `Error` will be thrown.
+
 ### league.ready(cb)
 
 Invoke the `cb` function when all connected argosy endpoint connections have fully informed the league of their available services. If the `league` is already fully informed by all connected endpoints, `cb` is invoked immediately. This function also returns a `Promise`.
 
-TO BE COMPLETED
+### league.id
+
+To be completed.
+
+### league.ports
+
+To be completed.
+
+### league.services
+
+To be completed.
 
 ## testing
 
