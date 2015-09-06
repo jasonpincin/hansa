@@ -48,7 +48,7 @@ var league = hansa()
 
 ### var port = league.port()
 
-Add an unpaired Argosy endpoint (aka port) to the league, to be connected to another Argosy endpoint or hansa league. This behaves just like any other Argosy endpoint, except it appears to provide all services that are provided by any Argosy endpoint piped to a league port.
+Add an unpaired Argosy endpoint (aka port) to the league, to be connected to another Argosy endpoint or hansa league. This behaves just like any other Argosy endpoint, except it appears to provide all services that are provided by any Argosy endpoint piped to a league port. It's possible to connect two `league` objects this way, by creating a `port` on each, and piping them together. 
 
 ### argosyService.pipe(port).pipe(argosyService)
 
