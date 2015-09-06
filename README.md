@@ -93,23 +93,32 @@ An eventuate representing a change in the `league`'s "sync" status. This occurs 
 
 ### league.error(cb)
 
-An eventuate representing an error condition within the league. Handler functions associated with this eventuate receive the `Error` object as the payload. This eventuate requires consumption, i.e. if no handler is associated with this eventuate when an `Error` is produced, the `Error` will be thrown.
+An eventuate representing an error condition within the `league`. Handler functions associated with this eventuate receive the `Error` object as the payload. This eventuate requires consumption, i.e. if no handler is associated with this eventuate when an `Error` is produced, the `Error` will be thrown.
 
 ### league.ready(cb)
 
-Invoke the `cb` function when all connected argosy endpoint connections have fully informed the league of their available services. If the `league` is already fully informed by all connected endpoints, `cb` is invoked immediately. This function also returns a `Promise`.
+Invoke the `cb` function when all connected argosy endpoint connections have fully informed the `league` of their available services. If the `league` is already fully informed by all connected endpoints, `cb` is invoked immediately. This function also returns a `Promise`.
 
 ### league.id
 
-To be completed.
+The unique ID (UUID) of the `league`.
 
 ### league.ports
 
-To be completed.
+An array containing all ports created via `league.port()`.
 
 ### league.services
 
-To be completed.
+An array representing all services offerd by the league. The array contains objects in the format:
+
+```javascript
+{
+    pattern: argosyPattern,
+    providers: [port, port, port]
+}
+```
+
+where `pattern` contains an [Argosy pattern](https://github.com/jasonpincin/argosy-pattern) representing the service, and `providers` contains an array of `port` objects which are connected to remote Argosy endpoints that offer the service.
 
 ## testing
 
