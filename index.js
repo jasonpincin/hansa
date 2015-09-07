@@ -53,7 +53,7 @@ module.exports = function createLeague () {
                 league.endpointAdded.produce(syncMessage)
             }).catch(function (err) {
                 league.error.produce(err)
-                league.syncStateChange.produce({ syncPending: --syncPending, syncComplete: syncComplete })
+                league.syncStateChange.produce({ syncPending: --syncPending, syncComplete: syncComplete, error: err })
             })
         })
         port.on('unpipe', clean)
