@@ -87,9 +87,12 @@ An eventuate representing a change in the `league`'s "sync" status. This occurs 
 ```javascript
 {
     syncPending: Number,
-    syncComplete: Number
+    syncComplete: Number,
+    error: Error
 }
 ```
+
+where `syncPending` is the number of Argosy endpoints the `league` is waiting for info from, and `syncComplete` is the number of times the `league` has been fully informed by an endpoint (this could occur multiple times for a single endpoint if services are added to that endpoint after the endpoint initially fully informs the `league`). The `error` property will only exist as an `Error` object if the state change resulted from an error during the `league`'s request for information from a remote Argosy endpoint.
 
 ### league.error(cb)
 
