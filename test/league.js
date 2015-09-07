@@ -85,5 +85,4 @@ test('unpipe', function (t) {
             t.equal(league.services.length, 0, 'league exposes 0 services before unpipe')
         })
     })
-
 })
