@@ -33,15 +33,14 @@
     "tape": "~4.2.0"
   },
   "dependencies": {
-    "afterward": "~1.0.2",
     "argosy": "~2.1.0",
     "argosy-pattern": "~2.1.0",
     "array-find": "~1.0.0",
     "eventuate": "~4.0.0",
+    "eventuate-filter": "~3.0.0",
     "eventuate-once": "~1.1.0",
     "object-assign": "~4.0.1",
     "object-hash": "~0.9.1",
-    "promise-polyfill": "~2.1.0",
     "split2": "~1.0.0",
     "stream-combiner2": "~1.0.2",
     "through2": "~2.0.0",

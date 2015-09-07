@@ -1,9 +1,8 @@
 var argosy         = require('argosy'),
     uuid           = require('uuid').v4,
     eventuate      = require('eventuate'),
+    filter         = require('eventuate-filter'),
     once           = require('eventuate-once'),
-    after          = require('afterward'),
-    Promise        = require('promise-polyfill'),
     createRegistry = require('./lib/registry'),
     setImmediate   = require('timers').setImmediate
 
@@ -22,6 +21,14 @@ module.exports = function createLeague () {
         syncStateChange: { value: eventuate(), configurable: true },
         endpointAdded  : { value: eventuate(), configurable: true },
         endpointRemoved: { value: eventuate(), configurable: true }
+    })
+
+    var leagueReady = filter(league.syncStateChange, function noSyncPending (state) {
+        return !state.syncPending
+    })
+
+    leagueReady.consumerAdded(function () {
+        if (!syncPending) setImmediate(leagueReady.produce, { syncPending: syncPending, syncComplete: syncComplete })
     })
 
     return league
@@ -75,15 +82,7 @@ module.exports = function createLeague () {
     }
 
     function ready (cb) {
-        var synced = !syncPending
-            ? Promise.resolve({ syncPending: syncPending, syncComplete: syncComplete })
-            : once.match(league.syncStateChange, noSyncPending)
-
-        return after(synced, cb)
-
-        function noSyncPending (state) {
-            return !state.syncPending
-        }
+        return once(leagueReady, cb)
     }
 
     function route (msg, cb) {
