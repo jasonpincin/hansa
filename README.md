@@ -110,9 +110,13 @@ The unique ID (UUID) of the `league`.
 
 An array containing all ports created via `league.port()`.
 
+### league.patterns
+
+An array of all service patterns (represented by Argosy pattern objects) offered by the `league`. 
+
 ### league.services
 
-An array representing all services offerd by the league. The array contains objects in the format:
+An array representing all services offerd by the `league`. The array contains objects in the format:
 
 ```javascript
 {
