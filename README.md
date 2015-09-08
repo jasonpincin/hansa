@@ -100,7 +100,7 @@ An eventuate representing an error condition within the `league`. Handler functi
 
 ### league.ready(cb)
 
-Invoke the `cb` function when all connected argosy endpoint connections have fully informed the `league` of their available services. If the `league` is already fully informed by all connected endpoints, `cb` is invoked immediately. This function also returns a `Promise`.
+Invoke the `cb` function when all connected argosy endpoint connections have fully informed the `league` of their available services. If the `league` is already fully informed by all connected endpoints, `cb` is invoked immediately. The `cb` function is gauranteed to only be executed once. This function also returns a `Promise`.
 
 ### league.id
 
