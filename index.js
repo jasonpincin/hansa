@@ -14,6 +14,7 @@ module.exports = function createLeague () {
     var league = Object.defineProperties({}, {
         id             : { value: uuid(), enumerable: true },
         ports          : { value: [], enumerable: true },
+        patterns       : { get: getPatterns, enumerable: true },
         services       : { get: getServices, enumerable: true },
         port           : { value: createPort, configurable: true },
         ready          : { value: ready, configurable: true },
@@ -93,4 +94,7 @@ module.exports = function createLeague () {
         return registry.services
     }
 
+    function getPatterns () {
+        return registry.patterns
+    }
 }
