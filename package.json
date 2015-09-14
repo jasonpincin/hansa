@@ -26,7 +26,7 @@
   "devDependencies": {
     "@jasonpincin/standard": "~5.0.0-8",
     "deep-equal": "~1.0.0",
-    "istanbul": "~0.3.18",
+    "istanbul": "~0.3.20",
     "opn": "~1.0.2",
     "promise-polyfill": "~2.1.0",
     "tap-dot": "~1.0.0",
@@ -34,9 +34,11 @@
     "tape": "~4.2.0"
   },
   "dependencies": {
+    "@jasonpincin/standard": "~5.0.0-8",
     "argosy": "~2.1.0",
     "argosy-pattern": "~2.1.0",
     "array-find": "~1.0.0",
+    "deep-equal": "~1.0.1",
     "eventuate": "~4.0.0",
     "eventuate-filter": "~3.0.0",
     "eventuate-once": "~1.1.0",
