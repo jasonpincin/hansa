@@ -65,24 +65,3 @@ test('league', function (t) {
         }
     })
 })
-
-test('unpipe', function (t) {
-    t.plan(2)
-
-    var service1 = argosy(),
-        league   = hansa(),
-        port     = league.port()
-
-    service1.pipe(port).pipe(service1)
-
-    service1.accept({ help: argosy.pattern.match.defined })
-    league.syncStateChange(function (state) {
-        if (state.syncPending) return
-
-        t.equal(league.services.length, 1, 'league exposes 1 service before unpipe')
-        service1.unpipe(port)
-        league.endpointRemoved(function () {
-            t.equal(league.services.length, 0, 'league exposes 0 services before unpipe')
-        })
-    })
-})
