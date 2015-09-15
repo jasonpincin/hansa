@@ -23,9 +23,7 @@ test('league', function (t) {
         cb(null, Math.max.apply(null, msg.max))
     })
 
-    league.syncStateChange(function (state) {
-        if (state.syncPending) return
-
+    league.ready(function () {
         t.ok(find(league.services, function (svc) {
             return equal(svc.pattern, { greet: argosy.pattern.match.string }) && find(svc.providers, function (provider) {
                 return provider.remoteId === service1.id
