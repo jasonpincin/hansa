@@ -4,8 +4,8 @@ var test   = require('tape'),
     argosy = require('argosy'),
     hansa  = require('..')
 
-test('league', function (t) {
-    t.plan(12)
+test('invoke', function (t) {
+    t.plan(1)
 
     var service1 = argosy(),
         client   = argosy(),
