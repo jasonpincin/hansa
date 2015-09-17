@@ -8,6 +8,7 @@ var argosy         = require('argosy'),
 
 module.exports = function createLeague () {
     var registry     = createRegistry(),
+        members      = [],
         syncPending  = 0,
         syncComplete = 0
 
@@ -16,6 +17,8 @@ module.exports = function createLeague () {
         ports          : { value: [], enumerable: true },
         patterns       : { get: getPatterns, enumerable: true },
         services       : { get: getServices, enumerable: true },
+        connect        : { value: connect, configurable: true },
+        disconnect     : { value: disconnect, configurable: true },
         port           : { value: createPort, configurable: true },
         ready          : { value: ready, configurable: true },
         error          : { value: eventuate({ requireConsumption: true }), configurable: true },
@@ -37,6 +40,20 @@ module.exports = function createLeague () {
     // hansa league terminology - a port is just a local argosy endpoint
     // each "port" will share it's id with the league so that all the remote
     // argosy endpoints (one connected to each port), see's the same id and services
+
+    function connect (endpoint) {
+        if (members.some(connectedVia(endpoint))) return
+        var port = createPort()
+        members.push({ endpoint: endpoint, port: port })
+        endpoint.pipe(port).pipe(endpoint)
+    }
+
+    function disconnect (endpoint) {
+        members.filter(connectedVia(endpoint)).forEach(function (member) {
+            member.endpoint.unpipe(member.port)
+        })
+    }
+
     function createPort () {
         var port = argosy({ id: league.id })
         league.ports.push(port)
@@ -47,7 +64,8 @@ module.exports = function createLeague () {
         registry.patterns.forEach(routePattern)
         registry.patternAdded(routePattern)
 
-        port.on('pipe', function () {
+        port.on('pipe', function (endpoint) {
+            members.push({ endpoint: endpoint, port: port })
             league.syncStateChange.produce({ syncPending: ++syncPending, syncComplete: syncComplete })
             port.subscribeRemote(['services']).then(function (syncMessage) {
                 league.syncStateChange.produce({ syncPending: --syncPending, syncComplete: ++syncComplete })
@@ -71,6 +89,9 @@ module.exports = function createLeague () {
                 registry.remove(svc, port)
             })
             league.ports.splice(league.ports.indexOf(port), 1)
+            members = members.filter(function filterUnpipedPort (member) {
+                return member.port !== port
+            })
             setImmediate(league.endpointRemoved.produce, {
                 id      : port.remoteId,
                 services: remoteServices.length
@@ -96,5 +117,11 @@ module.exports = function createLeague () {
 
     function getPatterns () {
         return registry.patterns
+    }
+}
+
+function connectedVia (endpoint) {
+    return function memberConnectedVia (member) {
+        return member.endpoint === endpoint
     }
 }
