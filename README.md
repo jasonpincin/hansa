@@ -46,6 +46,27 @@ league.ready(function () {
 var league = hansa()
 ```
 
+### league.connect(argosyEndpoint)
+
+Connect an Argosy endpoint to the `league`. This is a convenience function that does for you:
+
+```javascript
+var port = league.port()
+argosyEndpoint.pipe(port).pipe(argosyEndpoint)
+```
+
+In addition it maintains relationship between endpoint and port to make disconnection easier. Attempting to connect the same endpoint twice will have no effect.
+
+### league.disconnect(argosyEndpoint)
+
+Disconnect an Argosy endpoint from the `league`. This is a convenience function that does for you:
+
+```javascript
+argosyEndpoint.unpipe(port)
+```
+
+... where the league knows the port, so that you do not need to maintain a reference to it. 
+
 ### var port = league.port()
 
 Add an unpaired Argosy endpoint (aka port) to the league, to be connected to another Argosy endpoint or hansa league. This behaves just like any other Argosy endpoint, except it appears to provide all services that are provided by any Argosy endpoint piped to a league port. It's possible to connect two `league` objects this way, by creating a `port` on each, and piping them together. 
