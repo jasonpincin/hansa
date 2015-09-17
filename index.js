@@ -1,7 +1,6 @@
 var argosy         = require('argosy'),
     uuid           = require('uuid').v4,
     eventuate      = require('eventuate'),
-    filter         = require('eventuate-filter'),
     once           = require('eventuate-once'),
     after          = require('afterward'),
     Promise        = require('promise-polyfill'),
