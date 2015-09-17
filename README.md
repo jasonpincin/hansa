@@ -17,9 +17,9 @@ var service1 = argosy(),
     client   = argosy(),
     league   = hansa()
 
-service1.pipe(league.port()).pipe(service1)
-service2.pipe(league.port()).pipe(service2)
-client.pipe(league.port()).pipe(client)
+league.connect(service1) // shortcut for: service1.pipe(league.port()).pipe(service1)
+league.connect(service2)
+league.connect(client)
 
 service1.accept({ greet: argosy.pattern.match.string }).process(function (msg, cb) {
     cb(null, 'Greetings ' + msg.greet)
