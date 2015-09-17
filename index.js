@@ -3,14 +3,15 @@ var argosy         = require('argosy'),
     eventuate      = require('eventuate'),
     filter         = require('eventuate-filter'),
     once           = require('eventuate-once'),
+    after          = require('afterward'),
+    Promise        = require('promise-polyfill'),
+    find           = require('array-find'),
     createRegistry = require('./lib/registry'),
     setImmediate   = require('timers').setImmediate
 
 module.exports = function createLeague () {
     var registry     = createRegistry(),
-        members      = [],
-        syncPending  = 0,
-        syncComplete = 0
+        members      = []
 
     var league = Object.defineProperties({}, {
         id             : { value: uuid(), enumerable: true },
@@ -20,19 +21,9 @@ module.exports = function createLeague () {
         connect        : { value: connect, configurable: true },
         disconnect     : { value: disconnect, configurable: true },
         port           : { value: createPort, configurable: true },
-        ready          : { value: ready, configurable: true },
         error          : { value: eventuate({ requireConsumption: true }), configurable: true },
-        syncStateChange: { value: eventuate(), configurable: true },
         endpointAdded  : { value: eventuate(), configurable: true },
         endpointRemoved: { value: eventuate(), configurable: true }
-    })
-
-    var leagueReady = filter(league.syncStateChange, function noSyncPending (state) {
-        return !state.syncPending
-    })
-
-    leagueReady.consumerAdded(function () {
-        if (!syncPending) setImmediate(leagueReady.produce, { syncPending: syncPending, syncComplete: syncComplete })
     })
 
     return league
@@ -41,17 +32,28 @@ module.exports = function createLeague () {
     // each "port" will share it's id with the league so that all the remote
     // argosy endpoints (one connected to each port), see's the same id and services
 
-    function connect (endpoint) {
-        if (members.some(connectedVia(endpoint))) return
+    function connect (endpoint, cb) {
+        if (Array.isArray(endpoint)) return after(Promise.all(endpoint.map(function (singleEndpoint) {
+            return connect(singleEndpoint)
+        })), cb)
+        var existingMember = find(members, connectedVia(endpoint))
+        if (existingMember) return after(Promise.resolve(existingMember), cb)
         var port = createPort()
-        members.push({ endpoint: endpoint, port: port })
         endpoint.pipe(port).pipe(endpoint)
+        return after(once(league.endpointAdded, function (member) {
+            return member.endpoint === endpoint
+        }), cb)
     }
 
-    function disconnect (endpoint) {
+    function disconnect (endpoint, cb) {
+        var existingMember = find(members, connectedVia(endpoint))
+        if (!existingMember) return after(Promise.resolve(), cb)
         members.filter(connectedVia(endpoint)).forEach(function (member) {
             member.endpoint.unpipe(member.port)
         })
+        return after(once(league.endpointRemoved, function (member) {
+            return member.endpoint === endpoint
+        }), cb)
     }
 
     function createPort () {
@@ -65,20 +67,18 @@ module.exports = function createLeague () {
         registry.patternAdded(routePattern)
 
         port.on('pipe', function (endpoint) {
-            members.push({ endpoint: endpoint, port: port })
-            league.syncStateChange.produce({ syncPending: ++syncPending, syncComplete: syncComplete })
-            port.subscribeRemote(['services']).then(function (syncMessage) {
-                league.syncStateChange.produce({ syncPending: --syncPending, syncComplete: ++syncComplete })
-                league.endpointAdded.produce(syncMessage)
+            port.subscribeRemote(['services']).then(function () {
+                var member = { endpoint: endpoint, port: port }
+                members.push(member)
+                league.endpointAdded.produce(member)
             }).catch(function (err) {
                 league.error.produce(err)
-                league.syncStateChange.produce({ syncPending: --syncPending, syncComplete: syncComplete, error: err })
             })
         })
         port.on('unpipe', clean)
         port.remoteServiceAdded(onRemoteService)
 
-        function clean () {
+        function clean (endpoint) {
             port.unpipe()
             port.removeAllListeners()
             port.serviceAdded.removeAllConsumers()
@@ -93,18 +93,14 @@ module.exports = function createLeague () {
                 return member.port !== port
             })
             setImmediate(league.endpointRemoved.produce, {
-                id      : port.remoteId,
-                services: remoteServices.length
+                endpoint: endpoint,
+                port    : port
             })
         }
         function onRemoteService (svc) {
             registry.add(svc, port)
         }
         return port
-    }
-
-    function ready (cb) {
-        return once(leagueReady, cb)
     }
 
     function route (msg, cb) {
