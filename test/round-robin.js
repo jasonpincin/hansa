@@ -10,10 +10,6 @@ test('round-robin strategy', function (t) {
         client   = argosy(),
         league   = hansa()
 
-    service1.pipe(league.port()).pipe(service1)
-    service2.pipe(league.port()).pipe(service2)
-    client.pipe(league.port()).pipe(client)
-
     var servicesCalled = []
     service1.accept({ greet: argosy.pattern.match.string }).process(function (msg, cb) {
         servicesCalled.push(service1.id)
@@ -24,7 +20,7 @@ test('round-robin strategy', function (t) {
         cb(null, 'Greetings ' + msg.greet)
     })
 
-    league.ready(function () {
+    league.connect([service1, service2, client]).then(function () {
         client.invoke({ greet: 'Gege' }).then(function (msg) {
             client.invoke({ greet: 'Jason' }).then(function (msg) {
                 t.ok(~servicesCalled.indexOf(service1.id) && ~servicesCalled.indexOf(service2.id), 'called both service providers')
