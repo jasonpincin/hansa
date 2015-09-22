@@ -11,10 +11,8 @@ test('league.patterns', function (t) {
 
     service1.accept({ test: 123 })
     service2.accept({ test: 123 })
-    service1.pipe(league.port()).pipe(service1)
-    service2.pipe(league.port()).pipe(service2)
 
-    league.ready(function () {
+    league.connect([service1, service2], function () {
         t.deepEqual(league.patterns, [
             { test: 123 }
         ], 'should contain one pattern')
