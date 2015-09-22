@@ -5,16 +5,12 @@ var test   = require('tape'),
     hansa  = require('..')
 
 test('league', function (t) {
-    t.plan(12)
+    t.plan(8)
 
     var service1 = argosy(),
         service2 = argosy(),
         client   = argosy(),
         league   = hansa()
-
-    service1.pipe(league.port()).pipe(service1)
-    service2.pipe(league.port()).pipe(service2)
-    client.pipe(league.port()).pipe(client)
 
     service1.accept({ greet: argosy.pattern.match.string }).process(function (msg, cb) {
         cb(null, 'Greetings ' + msg.greet)
@@ -23,7 +19,7 @@ test('league', function (t) {
         cb(null, Math.max.apply(null, msg.max))
     })
 
-    league.ready(function () {
+    league.connect([service1, service2, client], function () {
         t.ok(find(league.services, function (svc) {
             return equal(svc.pattern, { greet: argosy.pattern.match.string }) && find(svc.providers, function (provider) {
                 return provider.remoteId === service1.id
@@ -34,8 +30,7 @@ test('league', function (t) {
                 return provider.remoteId === service2.id
             })
         }), 'number pattern exists')
-        t.equal(league.services.length, 2, 'should contain two services')
-        t.equal(league.ports.length, 3, 'ports should contain all active ports')
+        t.equal(league.patterns.length, 2, 'should contain two service patterns')
 
         client.invoke({ greet: 'Gege' }, function (err, msg) {
             t.false(err, 'greet does not result in error')
@@ -50,16 +45,5 @@ test('league', function (t) {
         client.invoke({ help: 'me' }, function (err, help) {
             t.true(err, 'invoking unimplemented services results in error')
         })
-    })
-
-    league.endpointAdded(function (endpoint) {
-        switch (endpoint.id) {
-            case client.id:
-                t.equals(endpoint.services, 0, 'client exposes no services')
-                break
-            default:
-                t.equals(endpoint.services, 1, 'server expose 1 service')
-                break
-        }
     })
 })
