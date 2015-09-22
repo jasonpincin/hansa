@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@jasonpincin/standard": "~5.0.0-8",
+    "afterward": "~2.0.0",
     "argosy": "~3.0.0",
     "argosy-pattern": "~2.1.0",
     "array-find": "~1.0.0",
