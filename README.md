@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/jasonpincin/hansa.svg?branch=master)](https://travis-ci.org/jasonpincin/hansa)
 [![Coverage Status](https://coveralls.io/repos/jasonpincin/hansa/badge.png?branch=master)](https://coveralls.io/r/jasonpincin/hansa?branch=master)
 
-Create leagues of [Argosy](https://github.com/jasonpincin/argosy) micro-service endpoints.
+Create leagues of [Argosy](https://github.com/jasonpincin/argosy) micro-service endpoints, connected via streams.
 
 ## example
 
@@ -17,10 +17,6 @@ var service1 = argosy(),
     client   = argosy(),
     league   = hansa()
 
-league.connect(service1) // shortcut for: service1.pipe(league.port()).pipe(service1)
-league.connect(service2)
-league.connect(client)
-
 service1.accept({ greet: argosy.pattern.match.string }).process(function (msg, cb) {
     cb(null, 'Greetings ' + msg.greet)
 })
@@ -29,7 +25,7 @@ service2.accept({ max: argosy.pattern.match.array }).process(function (msg, cb) 
     cb(null, Math.max.apply(null, msg.max))
 })
 
-league.ready(function () {
+league.connect([service1, service2, client], function () {
     client.invoke({ greet: 'Gege' }, function (err, message) {
         console.log(message)
 
