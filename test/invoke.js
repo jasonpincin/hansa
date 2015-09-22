@@ -11,14 +11,16 @@ test('invoke', function (t) {
         client   = argosy(),
         league   = hansa()
 
-    service1.pipe(league.port()).pipe(service1)
-    client.pipe(league.port()).pipe(client)
+    service1.pipe(league.createStream()).pipe(service1)
+    client.pipe(league.createStream()).pipe(client)
 
     service1.accept({ greet: argosy.pattern.match.string }).process(function (msg, cb) {
         cb(null, 'Greetings ' + msg.greet)
     })
 
-    league.ready(function () {
+    league.connected(function (member) {
+        if (member.remoteId !== service1.id) return
+
         t.ok(find(league.services, function (svc) {
             return equal(svc.pattern, { greet: argosy.pattern.match.string }) && find(svc.providers, function (provider) {
                 return provider.remoteId === service1.id
