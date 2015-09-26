@@ -6,24 +6,26 @@ var argosy         = require('argosy'),
     Promise        = require('promise-polyfill'),
     find           = require('array-find'),
     assign         = require('object-assign'),
-    createRegistry = require('./lib/registry'),
-    setImmediate   = require('timers').setImmediate
+    copy           = require('shallow-copy'),
+    setImmediate   = require('timers').setImmediate,
+    createRegistry = require('./lib/registry')
 
 module.exports = function createLeague () {
-    var registry     = createRegistry()
+    var registry    = createRegistry(),
+        connections = []
 
     var league = Object.defineProperties({}, {
-        id           : { value: uuid(), enumerable: true },
-        members      : { value: [], enumerable: true, writable: true },
-        patterns     : { get: getPatterns, enumerable: true },
-        services     : { get: getServices, enumerable: true },
-        connect      : { value: connect, configurable: true },
-        disconnect   : { value: disconnect, configurable: true },
-        createStream : { value: createStream, configurable: true },
-        error        : { value: eventuate({ requireConsumption: true }), configurable: true },
-        connected    : { value: eventuate(), configurable: true },
-        connectFailed: { value: eventuate(), configurable: true },
-        disconnected : { value: eventuate(), configurable: true }
+        id                 : { value: uuid(), enumerable: true },
+        connections        : { get: getConnections, enumerable: true },
+        patterns           : { get: getPatterns, enumerable: true },
+        services           : { get: getServices, enumerable: true },
+        connect            : { value: connect, configurable: true },
+        disconnect         : { value: disconnect, configurable: true },
+        createStream       : { value: createStream, configurable: true },
+        errorEvent         : { value: eventuate({ requireConsumption: true }), configurable: true },
+        connectEvent       : { value: eventuate(), configurable: true },
+        connectFailureEvent: { value: eventuate(), configurable: true },
+        disconnectEvent    : { value: eventuate(), configurable: true }
     })
 
     return league
@@ -38,13 +40,13 @@ module.exports = function createLeague () {
             return connect(remote)
         })), cb)
 
-        var existingMember = find(league.members, hasRemote(remote))
+        var existingMember = find(connections, hasRemote(remote))
         if (existingMember) return after(Promise.resolve(existingMember), cb)
         remote.pipe(league.createStream()).pipe(remote)
 
         var done = new Promise(function onConnectionResult (resolve, reject) {
-            once.match(league.connected, hasRemote(remote), resolve)
-            once.match(league.connectFailed, hasRemote(remote), reject)
+            once.match(league.connectEvent, hasRemote(remote), resolve)
+            once.match(league.connectFailureEvent, hasRemote(remote), reject)
         })
         return after(done, cb)
     }
@@ -54,12 +56,12 @@ module.exports = function createLeague () {
             return disconnect(remote)
         })), cb)
 
-        var existingMember = find(league.members, hasRemote(remote))
+        var existingMember = find(connections, hasRemote(remote))
         if (!existingMember) return after(Promise.resolve(), cb)
-        league.members.filter(hasRemote(remote)).forEach(function (member) {
+        connections.filter(hasRemote(remote)).forEach(function (member) {
             member.remote.unpipe(member)
         })
-        return after(once.match(league.disconnected, hasRemote(remote)), cb)
+        return after(once.match(league.disconnectEvent, hasRemote(remote)), cb)
     }
 
     function createStream () {
@@ -73,19 +75,19 @@ module.exports = function createLeague () {
 
         stream.on('pipe', function (remote) {
             assign(stream, { remote: remote })
-            league.members.push(stream)
+            connections.push(stream)
             stream.subscribeRemote(['services']).then(function () {
-                setImmediate(league.connected.produce, stream)
+                setImmediate(league.connectEvent.produce, stream)
             }).catch(function (err) {
-                league.members.splice(league.members.indexOf(stream), 1)
-                setImmediate(league.connectFailed.produce, assign(err, { stream: stream }))
+                connections.splice(connections.indexOf(stream), 1)
+                setImmediate(league.connectFailureEvent.produce, assign(err, { stream: stream }))
             })
         })
         stream.on('unpipe', clean)
         stream.remoteServiceAdded(onRemoteService)
 
         function clean (remote) {
-            var stream = find(league.members, hasRemote(remote))
+            var stream = find(connections, hasRemote(remote))
             stream.unpipe()
             stream.removeAllListeners()
             stream.remoteServiceAdded.removeAllConsumers()
@@ -95,10 +97,10 @@ module.exports = function createLeague () {
             remoteServices.forEach(function (svc) {
                 registry.remove(svc, stream)
             })
-            league.members = league.members.filter(function filterUnpiped (stream) {
+            connections = connections.filter(function filterUnpiped (stream) {
                 return stream.remote !== remote
             })
-            setImmediate(league.disconnected.produce, stream)
+            setImmediate(league.disconnectEvent.produce, stream)
         }
 
         function onRemoteService (svc) {
@@ -110,6 +112,10 @@ module.exports = function createLeague () {
 
     function route (msg, cb) {
         registry.getProvider(msg).invoke.remote(msg, cb)
+    }
+
+    function getConnections () {
+        return copy(connections)
     }
 
     function getServices () {
