@@ -18,12 +18,12 @@ test('invoke', function (t) {
         cb(null, 'Greetings ' + msg.greet)
     })
 
-    league.connected(function (member) {
-        if (member.remoteId !== service1.id) return
+    league.connectEvent(function (member) {
+        if (member.remote.id !== service1.id) return
 
         t.ok(find(league.services, function (svc) {
             return equal(svc.pattern, { greet: argosy.pattern.match.string }) && find(svc.providers, function (provider) {
-                return provider.remoteId === service1.id
+                return provider.remote.id === service1.id
             })
         }), 'greet pattern exists')
     })

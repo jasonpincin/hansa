@@ -5,7 +5,7 @@ var test   = require('tape'),
     hansa  = require('..')
 
 test('league', function (t) {
-    t.plan(8)
+    t.plan(9)
 
     var service1 = argosy(),
         service2 = argosy(),
@@ -20,14 +20,16 @@ test('league', function (t) {
     })
 
     league.connect([service1, service2, client], function () {
+        t.equal(league.connections.length, 3, 'connections.length === 3')
+
         t.ok(find(league.services, function (svc) {
             return equal(svc.pattern, { greet: argosy.pattern.match.string }) && find(svc.providers, function (provider) {
-                return provider.remoteId === service1.id
+                return provider.remote.id === service1.id
             })
         }), 'greet pattern exists')
         t.ok(find(league.services, function (svc) {
             return equal(svc.pattern, { max: argosy.pattern.match.array }) && find(svc.providers, function (provider) {
-                return provider.remoteId === service2.id
+                return provider.remote.id === service2.id
             })
         }), 'number pattern exists')
         t.equal(league.patterns.length, 2, 'should contain two service patterns')

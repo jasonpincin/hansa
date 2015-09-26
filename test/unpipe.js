@@ -12,12 +12,12 @@ test('unpipe', function (t) {
     service1.pipe(stream1).pipe(service1)
 
     service1.accept({ help: argosy.pattern.match.defined })
-    league.connected(function () {
+    league.connectEvent(function () {
         t.equal(league.services.length, 1, 'league exposes 1 service before unpipe')
         t.equal(league.services[0].providers.length, 1, 'with 1 provider before unpipe')
         service1.unpipe(stream1)
 
-        league.disconnected(function () {
+        league.disconnectEvent(function () {
             t.equal(league.services.length, 0, 'with 0 providers after unpipe')
         })
     })
