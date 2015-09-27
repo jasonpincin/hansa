@@ -22,16 +22,12 @@ test('league', function (t) {
     league.connect([service1, service2, client], function () {
         t.equal(league.connections.length, 3, 'connections.length === 3')
 
-        t.ok(find(league.services, function (svc) {
-            return equal(svc.pattern, { greet: argosy.pattern.match.string }) && find(svc.providers, function (provider) {
-                return provider.remote.id === service1.id
-            })
+        t.ok(find(league.patterns, function (pattern) {
+            return equal(pattern, { greet: argosy.pattern.match.string }) && league.providersOfPattern({ greet: argosy.pattern.match.string }).length
         }), 'greet pattern exists')
-        t.ok(find(league.services, function (svc) {
-            return equal(svc.pattern, { max: argosy.pattern.match.array }) && find(svc.providers, function (provider) {
-                return provider.remote.id === service2.id
-            })
-        }), 'number pattern exists')
+        t.ok(find(league.patterns, function (pattern) {
+            return equal(pattern, { max: argosy.pattern.match.array }) && league.providersOfPattern({ max: argosy.pattern.match.array }).length
+        }), 'max pattern exists')
         t.equal(league.patterns.length, 2, 'should contain two service patterns')
 
         client.invoke({ greet: 'Gege' }, function (err, msg) {

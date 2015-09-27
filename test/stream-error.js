@@ -20,7 +20,7 @@ test('league stream subscribe error', function (t) {
     })
     service1.pipe(stream).pipe(service1)
 
-    league.connectFailureEvent(function (err) {
+    league.connectionFailed(function (err) {
         t.equal(err, error, 'should produce error on league.error')
     })
 })
