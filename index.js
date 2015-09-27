@@ -8,7 +8,8 @@ var argosy         = require('argosy'),
     assign         = require('object-assign'),
     copy           = require('shallow-copy'),
     setImmediate   = require('timers').setImmediate,
-    createRegistry = require('./lib/registry')
+    createRegistry = require('./lib/registry'),
+    hasRemote      = require('./lib/stream-has-remote')
 
 module.exports = function createLeague () {
     var registry    = createRegistry(),
@@ -17,23 +18,21 @@ module.exports = function createLeague () {
     var league = Object.defineProperties({}, {
         id                 : { value: uuid(), enumerable: true },
         connections        : { get: getConnections, enumerable: true },
-        patterns           : { get: getPatterns, enumerable: true },
-        services           : { get: getServices, enumerable: true },
+        patterns           : { get: registry.patterns, enumerable: true },
         connect            : { value: connect, configurable: true },
         disconnect         : { value: disconnect, configurable: true },
         createStream       : { value: createStream, configurable: true },
-        errorEvent         : { value: eventuate({ requireConsumption: true }), configurable: true },
-        connectEvent       : { value: eventuate(), configurable: true },
-        connectFailureEvent: { value: eventuate(), configurable: true },
-        disconnectEvent    : { value: eventuate(), configurable: true }
+        providersForMessage: { value: registry.providersForMessage, configurable: true },
+        providersOfPattern : { value: registry.providersOfPattern, configurable: true },
+        error              : { value: eventuate({ requireConsumption: true }), configurable: true },
+        connectionOpened   : { value: eventuate(), configurable: true },
+        connectionFailed   : { value: eventuate(), configurable: true },
+        connectionClosed   : { value: eventuate(), configurable: true },
+        patternAdded       : { value: registry.patternAdded, configurable: true },
+        patternRemoved     : { value: registry.patternRemoved, configurable: true }
     })
 
     return league
-
-    // hansa league terminology - a member is a remote (same process or different) argosy-like endpoint
-    // connected to the league. These remote argosy endpoints are paired with local argosy endpoints created
-    // via createStream. All local argosy endpoints have the same ID and expose all service patterns that the
-    // league as a whole can satisfy
 
     function connect (remote, cb) {
         if (Array.isArray(remote)) return after(Promise.all(remote.map(function eachRemote (remote) {
@@ -45,8 +44,8 @@ module.exports = function createLeague () {
         remote.pipe(league.createStream()).pipe(remote)
 
         var done = new Promise(function onConnectionResult (resolve, reject) {
-            once.match(league.connectEvent, hasRemote(remote), resolve)
-            once.match(league.connectFailureEvent, hasRemote(remote), reject)
+            once.match(league.connectionOpened, hasRemote(remote), resolve)
+            once.match(league.connectionFailed, hasRemote(remote), reject)
         })
         return after(done, cb)
     }
@@ -61,7 +60,7 @@ module.exports = function createLeague () {
         connections.filter(hasRemote(remote)).forEach(function (member) {
             member.remote.unpipe(member)
         })
-        return after(once.match(league.disconnectEvent, hasRemote(remote)), cb)
+        return after(once.match(league.connectionClosed, hasRemote(remote)), cb)
     }
 
     function createStream () {
@@ -70,17 +69,17 @@ module.exports = function createLeague () {
         function routePattern (pattern) {
             stream.accept(pattern).process(route)
         }
-        registry.patterns.forEach(routePattern)
+        registry.patterns().forEach(routePattern)
         registry.patternAdded(routePattern)
 
         stream.on('pipe', function (remote) {
             assign(stream, { remote: remote })
             connections.push(stream)
             stream.subscribeRemote(['services']).then(function () {
-                setImmediate(league.connectEvent.produce, stream)
+                setImmediate(league.connectionOpened.produce, stream)
             }).catch(function (err) {
                 connections.splice(connections.indexOf(stream), 1)
-                setImmediate(league.connectFailureEvent.produce, assign(err, { stream: stream }))
+                setImmediate(league.connectionFailed.produce, assign(err, { stream: stream }))
             })
         })
         stream.on('unpipe', clean)
@@ -100,7 +99,7 @@ module.exports = function createLeague () {
             connections = connections.filter(function filterUnpiped (stream) {
                 return stream.remote !== remote
             })
-            setImmediate(league.disconnectEvent.produce, stream)
+            setImmediate(league.connectionClosed.produce, stream)
         }
 
         function onRemoteService (svc) {
@@ -111,24 +110,10 @@ module.exports = function createLeague () {
     }
 
     function route (msg, cb) {
-        registry.getProvider(msg).invoke.remote(msg, cb)
+        registry.nextProviderForMessage(msg).invoke.remote(msg, cb)
     }
 
     function getConnections () {
         return copy(connections)
-    }
-
-    function getServices () {
-        return registry.services
-    }
-
-    function getPatterns () {
-        return registry.patterns
-    }
-}
-
-function hasRemote (remote) {
-    return function hasRemote (member) {
-        return member.remote === remote
     }
 }
