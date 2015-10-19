@@ -67,9 +67,17 @@ argosyEndpoint.unpipe(port)
 
 Add an unpaired Argosy stream to the league, to be connected to another Argosy endpoint or hansa league. This behaves just like any other Argosy stream, except it appears to provide all services that are provided by any Argosy endpoint piped to a league port. It's possible to connect two `league` objects this way, by piping them together. 
 
-### argosyStream.pipe(leagueStream).pipe(argosyStream)
+Example of manually connecting an Argosy stream to a league (without using
+`league.connect`):
 
-Connect an Argosy stream to the league via the created port. Only one argosy stream should be connected to a given port. Upon connecting, the league will request to be notified of services offered by (now or in the future) the `argosyStream`, and any Argosy stream connected to the league will see those services, as well as the services of all other connected streams
+```javascript
+var league = require('hansa')(),
+    argosy = require('argosy')()
+
+argosy.pipe(league.createStream()).pipe(argosy)
+```
+
+Only one Argosy stream should be connected to a given Hansa league stream. Upon connecting, the league will request to be notified of services offered by (now or in the future) the Argosy stream, and any Argosy stream connected to the league will see those services, as well as the services of all other connected streams
 
 ### league.connectionOpened(cb)
 
