@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/jasonpincin/hansa.svg?branch=master)](https://travis-ci.org/jasonpincin/hansa)
 [![Coverage Status](https://coveralls.io/repos/jasonpincin/hansa/badge.png?branch=master)](https://coveralls.io/r/jasonpincin/hansa?branch=master)
 
-Create leagues of [Argosy](https://github.com/jasonpincin/argosy) micro-service endpoints, connected via streams.
+Create leagues of [Argosy](https://github.com/jasonpincin/argosy) micro-services; connected via pipes.
 
 ## example
 
@@ -63,86 +63,60 @@ argosyEndpoint.unpipe(port)
 
 ... where the league knows the port, so that you do not need to maintain a reference to it. 
 
-### var port = league.port()
+### var leagueStream = league.createStream()
 
-Add an unpaired Argosy endpoint (aka port) to the league, to be connected to another Argosy endpoint or hansa league. This behaves just like any other Argosy endpoint, except it appears to provide all services that are provided by any Argosy endpoint piped to a league port. It's possible to connect two `league` objects this way, by creating a `port` on each, and piping them together. 
+Add an unpaired Argosy stream to the league, to be connected to another Argosy endpoint or hansa league. This behaves just like any other Argosy stream, except it appears to provide all services that are provided by any Argosy endpoint piped to a league port. It's possible to connect two `league` objects this way, by piping them together. 
 
-### argosyService.pipe(port).pipe(argosyService)
+### argosyStream.pipe(leagueStream).pipe(argosyStream)
 
-Connect an Argosy endpoint to the league via the created port. Only one argosy endpoint should be connected to a given port. Upon connecting, the league will request to be notified of services offered by (now or in the future) the `argosyEndpoint`, and any Argosy endpoint connected to the league will see those services, as well as the services of all other connected endpoints.
+Connect an Argosy stream to the league via the created port. Only one argosy stream should be connected to a given port. Upon connecting, the league will request to be notified of services offered by (now or in the future) the `argosyStream`, and any Argosy stream connected to the league will see those services, as well as the services of all other connected streams
 
-### league.endpointAdded(cb)
+### league.connectionOpened(cb)
 
-An [eventuate](https://github.com/jasonpincin/eventuate) representing the addition of a new endpoint. This eventuate produces an event after the new endpoint has fully informed the `league` of it's services. Handler functions associated with this eventuate receive an event payload in the format of:
+An [eventuate](https://github.com/jasonpincin/eventuate) representing a 
+new Argosy stream being connected to the league.  Handler functions, `cb`, 
+associated with the eventuate receive the local (league-side) Argosy stream.
 
-```javascript
-{
-    id: String,
-    services: Number
-}
-```
+### league.connectionClosed(cb)
 
-Where `id` contains the UUID of the newly added remote Argosy endpoint, and `services` contains the count of services added.
+An eventuate representing an Argosy stream being disconnected from the league.
+Handler functions, `cb`, associated with the eventuate receive the local
+(league-side) Argosy stream.
 
-### league.endpointRemoved(cb)
+### league.connectionFailed(cb)
 
-An eventuate representing the removal of an endpoint. This eventuate produces an event upon the complete cleanup of a disconnected Argosy endpoint. Handler functions associated with this eventuate will receive an event payload in the format of:
+An eventuate representing a failure while attempting to connect a new Argosy
+stream to the league.  Handler functions, `cb`, associated with the eventuate 
+receive the local (league-side) Argosy strean.
 
-```javascript
-{
-    id: String,
-    services: Number
-}
-```
+### league.patternAdded(cb)
 
-Where `id` contains the UUID of the newly added remote Argosy endpoint, and `services` contains the count of services added.
+An eventuate representing a new service pattern being defined by one of the
+Argosy streams belonging to the league.  Handler functions, `cb`, associated 
+with the eventuate receive the [Argosy
+pattern](https://github.com/jasonpincin/argosy-pattern) object.
 
-### league.syncStateChange(cb)
+### league.patternRemoved(cb)
 
-An eventuate representing a change in the `league`'s "sync" status. This occurs when a new endpoint is connected. For each new Argosy endpoint connected, there is one "pending" sync operation. Once the endpoint sends information for all it's services, followed by a "sync" statement (signifying the `league` has been fully informed), pending is decremented by one, and "complete" sync operations is incremented. Handler functions associated with this eventuate receive a payload in the format of: 
-
-```javascript
-{
-    syncPending: Number,
-    syncComplete: Number,
-    error: Error
-}
-```
-
-where `syncPending` is the number of Argosy endpoints the `league` is waiting for info from, and `syncComplete` is the number of times the `league` has been fully informed by an endpoint (this could occur multiple times for a single endpoint if services are added to that endpoint after the endpoint initially fully informs the `league`). The `error` property will only exist as an `Error` object if the state change resulted from an error during the `league`'s request for information from a remote Argosy endpoint.
+An eventuate representing the removal of a previously accepted service pattern.
+Handler functions, `cb`, associated with the eventuate receive the [Argosy
+pattern](https://github.com/jasonpincin/argosy-pattern) object.
 
 ### league.error(cb)
 
 An eventuate representing an error condition within the `league`. Handler functions associated with this eventuate receive the `Error` object as the payload. This eventuate requires consumption, i.e. if no handler is associated with this eventuate when an `Error` is produced, the `Error` will be thrown.
 
-### league.ready(cb)
-
-Invoke the `cb` function when all connected argosy endpoint connections have fully informed the `league` of their available services. If the `league` is already fully informed by all connected endpoints, `cb` is invoked immediately. The `cb` function is gauranteed to only be executed once. This function also returns a `Promise`.
-
 ### league.id
 
 The unique ID (UUID) of the `league`.
 
-### league.ports
+### league.connections
 
-An array containing all ports created via `league.port()`.
+An array containing all streams created via `league.createStream()`.
 
 ### league.patterns
 
 An array of all service patterns (represented by Argosy pattern objects) offered by the `league`. 
-
-### league.services
-
-An array representing all services offerd by the `league`. The array contains objects in the format:
-
-```javascript
-{
-    pattern: argosyPattern,
-    providers: [port, port, port]
-}
-```
-
-where `pattern` contains an [Argosy pattern](https://github.com/jasonpincin/argosy-pattern) representing the service, and `providers` contains an array of `port` objects which are connected to remote Argosy endpoints that offer the service.
 
 ## testing
 
