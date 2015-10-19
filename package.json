@@ -1,6 +1,6 @@
 {
   "name": "hansa",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Create leagues of Argosy micro-service endpoints",
   "main": "index.js",
   "scripts": {
